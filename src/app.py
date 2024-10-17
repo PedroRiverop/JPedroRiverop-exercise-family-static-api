@@ -30,13 +30,48 @@ def handle_hello():
 
     # this is how you can use the Family datastructure by calling its methods
     members = jackson_family.get_all_members()
-    response_body = {
-        "hello": "world",
-        "family": members
-    }
-
-
+    response_body = members
+    
     return jsonify(response_body), 200
+
+@app.route('/member/<int:id>', methods=['GET'])
+def single_member(id):
+    member = jackson_family.get_member(id)
+    if not member:
+        raise APIException('Member not found', status_code=400)
+    
+    response = {
+        "first_name": member["first_name"],
+        "id": member["id"],
+        "age": member["age"],
+        "lucky_numbers": member["lucky_numbers"]
+    }
+    
+    return jsonify(response), 200
+
+
+@app.route('/member',  methods=['POST'])
+def create_member():
+    data = request.json
+    if not data:
+        raise APIException('No data provided', status_code=400)
+    if  'first_name' not in data or 'age' not  in data or 'lucky_numbers' not in data:
+        raise APIException('Missing required data', status_code=400)
+    
+    #verificacion con metodo:
+    result = jackson_family.add_member(data)
+    if result == "invalid age":
+        raise APIException('ivalid age', status_code=400)
+    
+    return ({"Message": "Miembro agregado"}),200
+
+
+@app.route('/member/<int:id>', methods=['DELETE'])
+def remove_member (id):
+    member_off = jackson_family.delete_member(id)
+    if not member_off:
+        raise APIException('Member not deleted', status_code=400)
+    return ({"done": True, "Message":"Miembro eliminado"}),200
 
 # this only runs if `$ python src/app.py` is executed
 if __name__ == '__main__':
